@@ -1,5 +1,15 @@
-import webpack from 'webpack';
+
 import theme from './themeConfig';
+
+let webpack;
+let isCloud = false;
+
+try {
+  webpack = require("webpack");
+} catch (e) {
+  isCloud = true;
+  // webpack will not be available or needed in production builds
+}
 
 export default {
   mode: 'universal',
@@ -107,7 +117,17 @@ export default {
     detectBrowserLanguage: false
   },
   styleResources: {
-    scss: [require.resolve('@storefront-ui/shared/styles/_helpers.scss', { paths: [process.cwd()] })]
+    scss: (function () {
+      try {
+        return [
+          require.resolve("@storefront-ui/shared/styles/_helpers.scss", {
+            paths: [process.cwd()],
+          }),
+        ];
+      } catch (e) {
+        return [];
+      }
+    })(),
   },
   publicRuntimeConfig: {
     theme
@@ -123,7 +143,7 @@ export default {
       'vee-validate/dist/rules'
     ],
     plugins: [
-      new webpack.DefinePlugin({
+      !isCloud && new webpack.DefinePlugin({
         'process.VERSION': JSON.stringify({
           // eslint-disable-next-line global-require
           version: require('./package.json').version,
